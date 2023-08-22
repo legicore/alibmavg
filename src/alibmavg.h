@@ -21,6 +21,8 @@
 
 #include <stddef.h>
 #include <math.h>
+#include <stdbool.h>
+#include <string.h>
 
 /*-----------------------------------------------------------*/
 
@@ -29,12 +31,26 @@
  */
 #define SMA_FUNCTION( type_t, xName, SIZE )     \
                                                 \
+    bool bReset_##xName = false;                \
+                                                \
     type_t xName( type_t xValue )               \
     {                                           \
         static type_t pxBuffer[ SIZE ];         \
         static type_t xSum = 0;                 \
         static size_t xNbrOfVals = 0;           \
         static size_t xBufIdx = 0;              \
+                                                \
+        /* Check if the reset flag has been set and if we have to reset all         \
+        internal variables */                                                       \
+        if( bReset_##xName == true )            \
+        {                                       \
+            ( void ) memset( pxBuffer, 0, sizeof( type_t ) * SIZE ); \
+            xSum = 0;                           \
+            xNbrOfVals = 0;                     \
+            xBufIdx = 0;                        \
+                                                \
+            bReset_##xName = false;             \
+        }                                       \
                                                 \
         if( xNbrOfVals < SIZE )                 \
         {                                       \
@@ -75,12 +91,25 @@
  */
 #define WMA_FUNCTION( type_t, xName, SIZE )         \
                                                     \
+    bool bReset_##xName = false;                    \
+                                                    \
     type_t xName( type_t xValue )                   \
     {                                               \
         static type_t pxBuffer[ SIZE ];             \
         double dSum = 0;                            \
         static size_t xNbrOfVals = 0;               \
         size_t xPoints = 1;                         \
+                                                    \
+        /* Check if the reset flag has been set and if we have to reset all         \
+        internal variables */                                                       \
+        if( bReset_##xName == true )                \
+        {                                           \
+            ( void ) memset( pxBuffer, 0, sizeof( type_t ) * SIZE ); \
+            xNbrOfVals = 0;                         \
+            xPoints = 1;                            \
+                                                    \
+            bReset_##xName = false;                 \
+        }                                           \
                                                     \
         if( xNbrOfVals == 0 )                       \
         {                                           \
