@@ -6,7 +6,7 @@
  * 
  * @brief       TODO
  * 
- * @copyright   (c) 2022 Martin Legleiter
+ * @copyright   (c) 2023 Martin Legleiter
  * 
  * @license     Use of this source code is governed by an MIT-style
  *              license that can be found in the LICENSE file or at
@@ -31,28 +31,40 @@
                                                 \
     type_t xName( type_t xValue )               \
     {                                           \
-        static type_t pxVal[ SIZE ];            \
+        static type_t pxBuffer[ SIZE ];         \
         static type_t xSum = 0;                 \
         static size_t xNbrOfVals = 0;           \
-        static size_t xValIdx = 0;              \
+        static size_t xBufIdx = 0;              \
                                                 \
         if( xNbrOfVals < SIZE )                 \
         {                                       \
-            pxVal[ xNbrOfVals ] = xValue;       \
-            xSum += pxVal[ xNbrOfVals++ ];      \
+            /* For the first SIZE-number of values, we place the given value in     \
+            the buffer, add it to the sum, and increment the value counter. */      \
+            pxBuffer[ xNbrOfVals ] = xValue;    \
+            xSum += pxBuffer[ xNbrOfVals++ ];   \
         }                                       \
         else                                    \
         {                                       \
-            xSum -= pxVal[ xValIdx ];           \
-            pxVal[ xValIdx ] = xValue ;         \
-            xSum += pxVal[ xValIdx++ ];         \
+            /* Substract the least recent value from the sum. */                    \
+            xSum -= pxBuffer[ xBufIdx ];        \
                                                 \
-            if( xValIdx == SIZE )               \
+            /* Place the given value as the most recent one in the buffer. */       \
+            pxBuffer[ xBufIdx ] = xValue ;      \
+                                                \
+            /* Add the most recent value to the sum and increment the index. */     \
+            xSum += pxBuffer[ xBufIdx++ ];      \
+                                                \
+            /* Check if we finished one cycle through the complete buffer, and      \
+            reset the index in case. */                                             \
+            if( xBufIdx == SIZE )               \
             {                                   \
-                xValIdx = 0;                    \
+                xBufIdx = 0;                    \
             }                                   \
         }                                       \
                                                 \
+        /* Return the average value by dividing the sum by the number of values     \
+        in the array. This is particularly important when the array is not          \
+        completely filled yet. */                                                   \
         return xSum / ( type_t ) xNbrOfVals;    \
     }
 
@@ -65,34 +77,34 @@
                                                     \
     type_t xName( type_t xValue )                   \
     {                                               \
-        static type_t pxVal[ SIZE ];                \
+        static type_t pxBuffer[ SIZE ];             \
         double dSum = 0;                            \
         static size_t xNbrOfVals = 0;               \
         size_t xPoints = 1;                         \
                                                     \
         if( xNbrOfVals == 0 )                       \
         {                                           \
-            pxVal[ xNbrOfVals++ ] = xValue;         \
+            pxBuffer[ xNbrOfVals++ ] = xValue;      \
         }                                           \
         else if( xNbrOfVals < SIZE )                \
         {                                           \
-            pxVal[ xNbrOfVals++ ] = xValue;         \
-            xPoints = ( xNbrOfVals * ( xNbrOfVals + 1 ) ) / 2;  \
+            pxBuffer[ xNbrOfVals++ ] = xValue;      \
+            xPoints = ( xNbrOfVals * ( xNbrOfVals + 1 ) ) / 2; \
         }                                           \
         else                                        \
         {                                           \
             for( size_t i = 0; i < SIZE - 1; i++ )  \
             {                                       \
-                pxVal[ i ] = pxVal[ i + 1 ];        \
+                pxBuffer[ i ] = pxBuffer[ i + 1 ];  \
             }                                       \
                                                     \
-            pxVal[ SIZE - 1 ] = xValue;             \
+            pxBuffer[ SIZE - 1 ] = xValue;          \
             xPoints = ( SIZE * ( SIZE + 1 ) ) / 2;  \
         }                                           \
                                                     \
         for( size_t i = 0; i < xNbrOfVals; i++ )    \
         {                                           \
-            dSum += ( ( double ) pxVal[ i ] * ( ( double ) ( i + 1 ) / ( double ) xPoints ) );  \
+            dSum += ( ( double ) pxBuffer[ i ] * ( ( double ) ( i + 1 ) / ( double ) xPoints ) ); \
         }                                           \
                                                     \
         return ( type_t ) lround( dSum );           \
